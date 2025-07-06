@@ -1,5 +1,3 @@
-# tasks_app
-
 # Tasks App 📝
 
 A simple Flutter app for managing tasks, built with:
