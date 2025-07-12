@@ -5,12 +5,16 @@ import 'package:intl/intl.dart';
 import 'package:tasks_app/shared/components/components.dart';
 import 'package:tasks_app/shared/cubit/cubit.dart';
 import 'package:tasks_app/shared/cubit/states.dart';
+
+import '../task_db.dart';
+
 class HomeLayout extends StatelessWidget {
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
   GlobalKey<FormState> formKey = GlobalKey();
   TextEditingController dateController = TextEditingController();
   TextEditingController timeController = TextEditingController();
   TextEditingController titleController = TextEditingController();
+
 
   HomeLayout({super.key});
 
@@ -31,10 +35,32 @@ class HomeLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (BuildContext context) => AppCubit()..taskDb,
+      create: (BuildContext context) => AppCubit()..getDate(),
       child: BlocConsumer<AppCubit, AppStates>(
-        listener: (BuildContext context, AppStates state) {},
+        listener: (BuildContext context, AppStates state) {
+          if(kDebugMode){
+            print('Listener received state :$state');
+            if (state is AppGetDatabaseState) {
+              print('Listener saw AppGetDatabaseState. Tasks: ${AppCubit.get(context).tasks.length}');
+            }
+          }
+          if(state is AppGetDatabaseState&&AppCubit.get(context).isBottomSheetShown){
+            WidgetsBinding.instance.addPostFrameCallback((_){
+              if(AppCubit.get(context).isBottomSheetShown){
+                Navigator.pop(context);
+              }
+            });
+          }
+        },
         builder: (BuildContext context, AppStates state) {
+          // if (kDebugMode) {
+          //   print('----- BlocConsumer Builder -----');
+          //   print('Current AppState: $state');
+          //   AppCubit cubitForDebug=AppCubit.get(context);
+          //   print('cubit.tasks before UI build:${cubitForDebug.tasks}');
+          //   print('cubit.currentIndex: ${cubitForDebug.currentIndex}');
+          //   print('-------------------------------------------,');
+          // }
           AppCubit cubit = AppCubit.get(context);
           return Scaffold(
             key: scaffoldKey,
@@ -45,48 +71,33 @@ class HomeLayout extends StatelessWidget {
               ),
               backgroundColor: Colors.indigo,
             ),
+
             floatingActionButton: FloatingActionButton(
               backgroundColor: Colors.indigo[400],
               shape: CircleBorder(),
               onPressed: () async {
                 if (cubit.isBottomSheetShown) {
-                  if (formKey.currentState!.validate()) {
-                    cubit
-                        .insert(
+                  if (formKey.currentState!.validate())  {
+                    await cubit.insert(
                             title: titleController.text,
                             time: timeController.text,
-                            date: dateController.text)
-                    //     .then((_) async {
-                    //   _clearController();
-                    //   Navigator.pop(context);
-                    //   cubit.changeBottomSheetState(
-                    //       isShow: false, icon: Icons.edit);
-                    //   cubit.tasks = await cubit.taskDb.getDb();
-                    // })
-                    ;
+                            date: dateController.text).then((_)async{
+                              _clearController();
+                              cubit.changeBottomSheetState(
+                                  isShow: false, icon: Icons.edit);
+                              cubit.tasks = await cubit.taskDb.getDb();
+                    }).catchError((e){
+                      if(kDebugMode){
+                        print('Error when insert data to DB: $e');
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save task, please try again')));
+                    });
                     if (kDebugMode) {
-                      print("Insert successful");
+                      print("FAB: cubit.insert() awaited and completed.");
+                      print("FAB: cubit.tasks after insert: ${cubit.tasks}");
                     }
+
                     Navigator.pop(context);
-                    cubit.tasks=await cubit.taskDb.getDb();
-                    // cubit.taskDb
-                    //      .insertToTask(titleController.text, timeController.text,
-                    //      dateController.text)
-                    //      .then((_) async {
-                    //      _clearController();
-                    //      Navigator.pop(context);
-                    //      cubit.changeBottomSheetState(isShow: false, icon: Icons.edit);
-                    //      cubit.tasks=await cubit.taskDb.getDb();
-                    //  }).catchError((e) {
-                    //    if (kDebugMode) {
-                    //      print('Error when insert data to DB :$e');
-                    //    }
-                    //
-                    //      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    //          content:
-                    //          Text('Failed to save task ,please try again !')));
-                    //
-                    //  });
                   }
                 } else {
                   scaffoldKey.currentState
@@ -169,8 +180,10 @@ class HomeLayout extends StatelessWidget {
                               ))
                       .closed
                       .then((value) {
-                    cubit.changeBottomSheetState(
-                        isShow: false, icon: Icons.edit);
+                        if(cubit.isBottomSheetShown) {
+                          cubit.changeBottomSheetState(
+                              isShow: false, icon: Icons.edit);
+                        }
                   });
                   cubit.changeBottomSheetState(isShow: true, icon: Icons.add);
                   _clearController();
@@ -183,8 +196,15 @@ class HomeLayout extends StatelessWidget {
             ),
             bottomNavigationBar: BottomNavigationBar(
               currentIndex: cubit.currentIndex,
-              onTap: (value) {
+              onTap: (value) async{
                 cubit.changeIndex(value);
+                await cubit.getDate();
+                // if (kDebugMode) {
+                //   print('--- BottomNav onTap ---');
+                //   print('cubit.tasks after getDate: ${cubit.tasks}');
+                //   print('-----------------------');
+                // }
+
               },
               items: [
                 BottomNavigationBarItem(
@@ -203,7 +223,7 @@ class HomeLayout extends StatelessWidget {
                     label: 'Archive')
               ],
             ),
-            body: cubit.tasks.isEmpty
+            body: state is! AppGetDatabaseLoadingState
                 ? Center(child: CircularProgressIndicator())
                 : cubit.screen[cubit.currentIndex],
           );

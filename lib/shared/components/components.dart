@@ -40,31 +40,42 @@ Widget defaultFormField({
 
 Widget buildTaskItems(Map model) => Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Row(children: [
-        CircleAvatar(
-          radius: 40.0,
-          backgroundColor: Colors.indigo[400],
-          child: Text(
-            '${model['time']}',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-        SizedBox(
-          width: 20.0,
-        ),
-        Column(
-          crossAxisAlignment:CrossAxisAlignment.start ,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${model['title']}',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
-            ),
-            Text(
-              '${model['date']}',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      ]),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+            children: [
+              CircleAvatar(
+                radius: 40.0,
+                backgroundColor: Colors.indigo[400],
+                child: Text(
+                  '${model['time']}',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              SizedBox(
+                width: 20.0,
+              ),
+              Column(
+                crossAxisAlignment:CrossAxisAlignment.start ,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${model['title']}',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.0),
+                  ),
+                  Text(
+                    '${model['date']}',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              )
+            ]),
+      ),
     );
+Widget buildTaskItem(Map model)=>Column(
+  children: [
+    Card(
+
+    )
+  ],
+);

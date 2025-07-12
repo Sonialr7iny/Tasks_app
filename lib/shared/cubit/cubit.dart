@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tasks_app/shared/cubit/states.dart';
@@ -6,10 +7,8 @@ import '../../modules/archive/archive_screen.dart';
 import '../../modules/done/done_screen.dart';
 import '../../modules/tasks/task_screen.dart';
 import '../../task_db.dart';
-import '../components/constants.dart';
 
 class AppCubit extends Cubit<AppStates>{
-  AppCubit():super(AppInitialState());
   static AppCubit get(context)=>BlocProvider.of(context);
   int currentIndex = 0;
   List<Widget> screen = [
@@ -22,13 +21,17 @@ class AppCubit extends Cubit<AppStates>{
     'Done',
     'Archive',
   ];
-  void changeIndex(int index){
+  IconData febIcon = Icons.edit;
+  bool isBottomSheetShown = false;
+  List<Map> tasks=[];
+  TaskDb taskDb = TaskDb();
+
+  AppCubit():super(AppInitialState());
+  void changeIndex(int index)async{
     currentIndex=index;
     emit(AppChangeBottomNavBarState());
   }
 
-  IconData febIcon = Icons.edit;
-  bool isBottomSheetShown = false;
   void changeBottomSheetState({
     required bool isShow,
     required IconData icon,
@@ -39,16 +42,37 @@ class AppCubit extends Cubit<AppStates>{
   }
 
 
-  List<Map> tasks=[];
-  TaskDb taskDb = TaskDb();
-  Future<List<Map>> getDate()async => tasks=await taskDb.getDb();
-  void insert({
+  Future<List<Map>> getDate() async {
+    await _refreshTasks();
+    return tasks=await taskDb.getDb();
+  }
+  Future<void> insert({
     required String title,
     required String time,
     required String date,
-}){
-    taskDb.insertToTask(title, time, date);
-    emit(AppInsertDatabaseState());
+})async{
+    try{
+      await  taskDb.insertToTask(title, time, date);
+      emit(AppInsertDatabaseState());
+      if(kDebugMode){
+        print("Cubit insert: taskDb.insertToTask completed.");
+      }
+      await _refreshTasks();
+    }catch(e){
+      if(kDebugMode){
+        print('Error inserting task:$e');
+        emit(AppDatabaseErrorState(e.toString()));
+      }
+    }
+
   }
+Future<void> _refreshTasks() async{
+    tasks =await taskDb.getDb();
+    emit(AppGetDatabaseState());
+    emit(AppGetDatabaseLoadingState());
+
+}
+
+
 
 }

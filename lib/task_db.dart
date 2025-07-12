@@ -9,13 +9,13 @@ class TaskDb {
 
   Future<Database?> get database async {
     if (_database == null) {
-      return _database = await _initDb();
+      return _database = await initDb();
     } else {
       return _database;
     }
   }
 
-  Future<Database> _initDb() async {
+  Future<Database> initDb() async {
     String dbpath = await getDatabasesPath();
     String path = join(dbpath, 'task.db');
     if (kDebugMode) {
@@ -87,7 +87,9 @@ class TaskDb {
             [title, time, date, 'new'],
           );
           if (kDebugMode) {
+            // List<Map> task=await getDb();
             print('Insert successfully, ID:$id');
+            // print('Tasks are :$task');
           }
         } catch (e) {
           if (kDebugMode) {
@@ -117,13 +119,43 @@ class TaskDb {
 
   Future<List<Map>> getDb()async{
     final Database? db=await database;
+
     if (db == null) {
       if (kDebugMode) {
         print('Error: Database instance is null .Cannot insert task.');
       }
+      return<Map<String ,dynamic>>[];
     }
-    return await db!.rawQuery('SELECT * FROM tasks');
-
+    if(!db.isOpen){
+      if(kDebugMode){
+        print('TASK_DB::getDb - Error : Database is not open. Cannot query tasks.');
+      }
+      return<Map<String ,dynamic>>[];
+    }
+    List<Map<String,dynamic>> result=<Map<String,dynamic>>[];
+    try{
+      if(kDebugMode){
+        print('TASK_DB::getDb - Attempting to execute rawQuery: SELECT * FROM tasks');
+      }
+      result=await db.rawQuery('SELECT * FROM tasks');
+      if(kDebugMode){
+        print('TASK_DB :: getDb - rawQuery executed. Number of records fetched:${result.length} ');
+        if(result.isNotEmpty){
+          print('TAsK_DB:: getDb -First record: ${result.first}');
+          if(result.length>1){
+            print('TASK_DB :: getDB - Last record: ${result.last}');
+          }
+        }
+      }
+      return result;
+    }catch(e,s){
+      if(kDebugMode){
+        print('TASK_DB :: getDB - !!! CRITTICAL ERROR during rawQuery: ${e.toString()}');
+        print('TASK_DB :: getDB - Stacktrace: $s');
+      }
+      return <Map<String,dynamic>>[];
+    }
+    // return await db.rawQuery('SELECT * FROM tasks');
   }
 
 }
