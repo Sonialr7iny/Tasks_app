@@ -1,16 +1,18 @@
-# tasks_app
+# Tasks App 📝
 
-A new Flutter project.
+A simple Flutter app for managing tasks, built with:
 
-## Getting Started
+- 🧠 BLoC for state management
+- 💾 Sqflite for local database
+- 🎯 Dart & Flutter
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Add, update, and delete tasks
+- Store tasks locally
+- Clean architecture with Cubit
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Author
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Sonialr7iny**  
+[GitHub Profile](https://github.com/Sonialr7iny)
