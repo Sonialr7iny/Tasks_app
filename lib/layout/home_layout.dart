@@ -6,8 +6,6 @@ import 'package:tasks_app/shared/components/components.dart';
 import 'package:tasks_app/shared/cubit/cubit.dart';
 import 'package:tasks_app/shared/cubit/states.dart';
 
-import '../task_db.dart';
-
 class HomeLayout extends StatelessWidget {
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
   GlobalKey<FormState> formKey = GlobalKey();
