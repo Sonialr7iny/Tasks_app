@@ -2,10 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-
 class TaskDb {
   static Database? _database;
-
 
   Future<Database?> get database async {
     if (_database == null) {
@@ -29,47 +27,42 @@ class TaskDb {
         if (kDebugMode) print('Configuring DB');
         await db.execute('PRAGMA foreign_keys = ON'); // Example
       },
-
-      onOpen: (db)async {
+      onOpen: (db) async {
         // tasks=await getDb();
         if (kDebugMode) print('DB Opened');
       },
     );
     return database;
   }
-  _onCreate(Database database,int version)async {
+
+  _onCreate(Database database, int version) async {
     if (kDebugMode) {
-      print('Database created=============================With version $version ...... ');
+      print(
+          'Database created=============================With version $version ...... ');
     }
-    await database
-        .execute('''
+    await database.execute('''
   CREATE TABLE tasks(task_id INTEGER PRIMARY KEY AUTOINCREMENT, 
   title TEXT, 
   time TEXT, 
   date TEXT, 
   status TEXT
   )
-  ''')
-        .then((value) {
+  ''').then((value) {
       if (kDebugMode) {
         print('table created===================,');
       }
-    })
-        .catchError((error) {
+    }).catchError((error) {
       if (kDebugMode) {
         print('Error when creating table${error.toString()}');
       }
-
-    }
-    );
-
+    });
   }
 
   Future<void> insertToTask(
-      String title,
-      String time,
-      String date,
-      ) async {
+    String title,
+    String time,
+    String date,
+  ) async {
     try {
       final Database? db = await database;
       if (db == null) {
@@ -100,75 +93,82 @@ class TaskDb {
       });
     } catch (e) {
       if (kDebugMode) {
-        print('Error obtaining database or during transaction :${e.toString()}');
+        print(
+            'Error obtaining database or during transaction :${e.toString()}');
       }
       rethrow;
     }
   }
 
-  Future<void> closeDb()async{
-    final db =_database;
-    if(db!=null &&db.isOpen){
+  Future<void> closeDb() async {
+    final db = _database;
+    if (db != null && db.isOpen) {
       await db.close();
-      _database=null;
-      if(kDebugMode){
+      _database = null;
+      if (kDebugMode) {
         print('Database closed. ');
       }
     }
   }
 
-  Future<List<Map>> getDb()async{
-    final Database? db=await database;
+  Future<List<Map>> getDb() async {
+    final Database? db = await database;
 
     if (db == null) {
       if (kDebugMode) {
         print('Error: Database instance is null .Cannot insert task.');
       }
-      return<Map<String ,dynamic>>[];
+      return <Map<String, dynamic>>[];
     }
-    if(!db.isOpen){
-      if(kDebugMode){
-        print('TASK_DB::getDb - Error : Database is not open. Cannot query tasks.');
+    if (!db.isOpen) {
+      if (kDebugMode) {
+        print(
+            'TASK_DB::getDb - Error : Database is not open. Cannot query tasks.');
       }
-      return<Map<String ,dynamic>>[];
+      return <Map<String, dynamic>>[];
     }
-    List<Map<String,dynamic>> result=<Map<String,dynamic>>[];
-    try{
-      if(kDebugMode){
-        print('TASK_DB::getDb - Attempting to execute rawQuery: SELECT * FROM tasks');
+    List<Map<String, dynamic>> result = <Map<String, dynamic>>[];
+    try {
+      if (kDebugMode) {
+        print(
+            'TASK_DB::getDb - Attempting to execute rawQuery: SELECT * FROM tasks');
       }
-      result=await db.rawQuery('SELECT * FROM tasks');
-      if(kDebugMode){
-        print('TASK_DB :: getDb - rawQuery executed. Number of records fetched:${result.length} ');
-        if(result.isNotEmpty){
+      result = await db.rawQuery('SELECT * FROM tasks');
+      if (kDebugMode) {
+        print(
+            'TASK_DB :: getDb - rawQuery executed. Number of records fetched:${result.length} ');
+        if (result.isNotEmpty) {
           print('TAsK_DB:: getDb -First record: ${result.first}');
-          if(result.length>1){
+          if (result.length > 1) {
             print('TASK_DB :: getDB - Last record: ${result.last}');
           }
         }
       }
       return result;
-    }catch(e,s){
-      if(kDebugMode){
-        print('TASK_DB :: getDB - !!! CRITICAL ERROR during rawQuery: ${e.toString()}');
+    } catch (e, s) {
+      if (kDebugMode) {
+        print(
+            'TASK_DB :: getDB - !!! CRITICAL ERROR during rawQuery: ${e.toString()}');
         print('TASK_DB :: getDB - Stacktrace: $s');
       }
-      return <Map<String,dynamic>>[];
+      return <Map<String, dynamic>>[];
     }
     // return await db.rawQuery('SELECT * FROM tasks');
   }
 
   Future<void> updateData({
     required String status,
-     required int id,
-})async
-  {
-    final Database? db=await database;
-    await db!.rawUpdate('UPDATE tasks SET status =? WHERE id =?',
-    [status,'$id']
-    );
+    required int id,
+  }) async {
+    final Database? db = await database;
+    await db!.rawUpdate(
+        'UPDATE tasks SET status =? WHERE task_id =?', [status, '$id']);
   }
 
-
-
+  Future<void> deleteData({
+    required int id,
+  }) async {
+    final Database? db=await database;
+    await db!.rawDelete('DELETE FROM tasks WHERE task_id=?',['$id']);
+  }
 }

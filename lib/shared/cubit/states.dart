@@ -11,6 +11,8 @@ class AppGetDatabaseState extends AppStates{}
 
 class AppUpdateDatabaseState extends AppStates{}
 
+class AppDeleteDatabaseState extends AppStates{}
+
 class AppGetDatabaseLoadingState extends AppStates{}
 
 class AppDatabaseErrorState extends AppStates{

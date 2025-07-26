@@ -6,14 +6,12 @@ import 'package:tasks_app/shared/components/components.dart';
 import 'package:tasks_app/shared/cubit/cubit.dart';
 import 'package:tasks_app/shared/cubit/states.dart';
 
-import '../task_db.dart';
-
 class HomeLayout extends StatelessWidget {
-  GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
-  GlobalKey<FormState> formKey = GlobalKey();
-  TextEditingController dateController = TextEditingController();
-  TextEditingController timeController = TextEditingController();
-  TextEditingController titleController = TextEditingController();
+ final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
+ final GlobalKey<FormState> formKey = GlobalKey();
+ final TextEditingController dateController = TextEditingController();
+ final TextEditingController timeController = TextEditingController();
+ final TextEditingController titleController = TextEditingController();
 
 
   HomeLayout({super.key});
@@ -35,22 +33,22 @@ class HomeLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (BuildContext context) => AppCubit()..getDate(),
+      create: (BuildContext context) => AppCubit()..loadTasks(),
       child: BlocConsumer<AppCubit, AppStates>(
         listener: (BuildContext context, AppStates state) {
           if(kDebugMode){
-            print('Listener received state :$state');
+            print('HomeLayout Listener received state :$state');
             if (state is AppGetDatabaseState) {
-              print('Listener saw AppGetDatabaseState. Tasks: ${AppCubit.get(context).tasks.length}');
+              print('HomeLayout Listener saw AppGetDatabaseState. Tasks: ${AppCubit.get(context).newTasks.length},Done:${AppCubit.get(context).doneTasks.length},Archive:${AppCubit.get(context).archivedTasks.length}');
             }
           }
-          if(state is AppGetDatabaseState&&AppCubit.get(context).isBottomSheetShown){
-            WidgetsBinding.instance.addPostFrameCallback((_){
-              if(AppCubit.get(context).isBottomSheetShown){
-                Navigator.pop(context);
-              }
-            });
-          }
+          // if(state is AppGetDatabaseState&&AppCubit.get(context).isBottomSheetShown){
+          //   WidgetsBinding.instance.addPostFrameCallback((_){
+          //     if(AppCubit.get(context).isBottomSheetShown){
+          //       Navigator.pop(context);
+          //     }
+          //   });
+          // }
         },
         builder: (BuildContext context, AppStates state) {
           // if (kDebugMode) {
@@ -81,24 +79,35 @@ class HomeLayout extends StatelessWidget {
                     await cubit.insert(
                             title: titleController.text,
                             time: timeController.text,
-                            date: dateController.text).then((_)async{
+                            date: dateController.text).then((_){
                               _clearController();
-                              cubit.changeBottomSheetState(
-                                  isShow: false, icon: Icons.edit);
-                              cubit.tasks = await cubit.taskDb.getDb();
+                              // cubit.newTasks = await cubit.taskDb.getDb();
 
                     }).catchError((e){
                       if(kDebugMode){
                         print('Error when insert data to DB: $e');
                       }
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save task, please try again')));
+                      if(context.mounted){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Failed to save task, please try again'))
+                        );
+                      }
+
                     });
                     if (kDebugMode) {
                       print("FAB: cubit.insert() awaited and completed.");
-                      print("FAB: cubit.tasks after insert: ${cubit.tasks}");
+                      print("FAB: cubit.tasks after insert: ${cubit.newTasks}");
+                    }
+                    if(context.mounted){
+                      if(Navigator.canPop(context)){
+                        Navigator.pop(context);
+                      }
                     }
 
-                    Navigator.pop(context);
+                    if(cubit.isBottomSheetShown){
+                      cubit.changeBottomSheetState(
+                          isShow: false, icon: Icons.edit);
+                    }
                   }
                 } else {
                   scaffoldKey.currentState
@@ -108,74 +117,79 @@ class HomeLayout extends StatelessWidget {
                                 padding: const EdgeInsets.all(20.0),
                                 child: Form(
                                   key: formKey,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      defaultFormField(
-                                          controller: titleController,
-                                          type: TextInputType.text,
-                                          text: 'Title',
-                                          prefix: Icons.title,
-                                          validate: (value) {
-                                            if (value.isEmpty) {
-                                              return 'Title must not be empty';
-                                            }
-                                            return null;
-                                          }),
-                                      SizedBox(
-                                        height: 10.0,
-                                      ),
-                                      defaultFormField(
-                                          controller: timeController,
-                                          type: TextInputType.text,
-                                          text: 'Time',
-                                          prefix: Icons.access_time,
-                                          validate: (value) {
-                                            if (value.isEmpty) {
-                                              return 'Time must not be empty';
-                                            }
-                                            return null;
-                                          },
-                                          onTap: () {
-                                            showTimePicker(
-                                                    context: context,
-                                                    initialTime:
-                                                        TimeOfDay.now())
-                                                .then((value) {
-                                              timeController.text = value!
-                                                  .format(context)
-                                                  .toString();
-                                            });
-                                          }),
-                                      SizedBox(
-                                        height: 10.0,
-                                      ),
-                                      defaultFormField(
-                                          controller: dateController,
-                                          type: TextInputType.text,
-                                          text: 'Date',
-                                          prefix: Icons.calendar_month,
-                                          validate: (value) {
-                                            if (value.isEmpty) {
-                                              return 'Date must not be empty';
-                                            }
-                                            return null;
-                                          },
-                                          onTap: () {
-                                            dateController.clear();
-                                            showDatePicker(
-                                                    context: context,
-                                                    initialDate: DateTime.now(),
-                                                    firstDate: DateTime.now(),
-                                                    lastDate: DateTime.parse(
-                                                        '2025-12-12'))
-                                                .then((value) {
-                                              dateController.text =
-                                                  DateFormat.yMMMd().format(
-                                                      value as DateTime);
-                                            });
-                                          }),
-                                    ],
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        defaultFormField(
+                                            controller: titleController,
+                                            type: TextInputType.text,
+                                            text: 'Title',
+                                            prefix: Icons.title,
+                                            validate: (value) {
+                                              if (value.isEmpty) {
+                                                return 'Title must not be empty';
+                                              }
+                                              return null;
+                                            }),
+                                        SizedBox(
+                                          height: 10.0,
+                                        ),
+                                        defaultFormField(
+                                            controller: timeController,
+                                            type: TextInputType.text,
+                                            text: 'Time',
+                                            prefix: Icons.access_time,
+                                            validate: (value) {
+                                              if (value.isEmpty) {
+                                                return 'Time must not be empty';
+                                              }
+                                              return null;
+                                            },
+                                            onTap: () {
+                                              showTimePicker(
+                                                      context: context,
+                                                      initialTime:
+                                                          TimeOfDay.now())
+                                                  .then((value) {
+                                                    if(context.mounted){
+                                                      timeController.text = value!
+                                                          .format(context)
+                                                          .toString();
+                                                    }
+
+                                              });
+                                            }),
+                                        SizedBox(
+                                          height: 10.0,
+                                        ),
+                                        defaultFormField(
+                                            controller: dateController,
+                                            type: TextInputType.text,
+                                            text: 'Date',
+                                            prefix: Icons.calendar_month,
+                                            validate: (value) {
+                                              if (value.isEmpty) {
+                                                return 'Date must not be empty';
+                                              }
+                                              return null;
+                                            },
+                                            onTap: () {
+                                              dateController.clear();
+                                              showDatePicker(
+                                                      context: context,
+                                                      initialDate: DateTime.now(),
+                                                      firstDate: DateTime.now(),
+                                                      lastDate: DateTime.parse(
+                                                          '2025-12-12'))
+                                                  .then((value) {
+                                                dateController.text =
+                                                    DateFormat.yMMMd().format(
+                                                        value as DateTime);
+                                              });
+                                            }),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ))
@@ -197,14 +211,8 @@ class HomeLayout extends StatelessWidget {
             ),
             bottomNavigationBar: BottomNavigationBar(
               currentIndex: cubit.currentIndex,
-              onTap: (value) async{
+              onTap: (value) {
                 cubit.changeIndex(value);
-                // await cubit.getDate();
-                // if (kDebugMode) {
-                //   print('--- BottomNav onTap ---');
-                //   print('cubit.tasks after getDate: ${cubit.tasks}');
-                //   print('-----------------------');
-                // }
 
               },
               items: [
@@ -224,7 +232,7 @@ class HomeLayout extends StatelessWidget {
                     label: 'Archive')
               ],
             ),
-            body: state is! AppGetDatabaseLoadingState
+            body: state is AppGetDatabaseLoadingState
                 ? Center(child: CircularProgressIndicator())
                 : cubit.screen[cubit.currentIndex],
           );

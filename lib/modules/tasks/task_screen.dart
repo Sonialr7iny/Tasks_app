@@ -1,7 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tasks_app/shared/components/components.dart';
-import 'package:tasks_app/shared/components/constants.dart';
 import 'package:tasks_app/shared/cubit/cubit.dart';
 import 'package:tasks_app/shared/cubit/states.dart';
 
@@ -12,10 +12,32 @@ class TaskScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AppCubit,AppStates>(
       listener: (BuildContext context,AppStates state) {
-        print('Hello consumer in Task Screen !!!!!------');
+        if (kDebugMode) {
+          print('Hello consumer in Task Screen !!!!!------');
+        }
+      },
+      buildWhen: (previous,current){
+        return current is AppGetDatabaseState||
+              current is AppGetDatabaseLoadingState||
+              current is AppInitialState;
       },
       builder: (BuildContext context,AppStates state) {
-        var tasks=AppCubit.get(context).tasks;
+        AppCubit cubit=AppCubit.get(context);
+        var tasks=cubit.newTasks;
+        if(state is AppGetDatabaseLoadingState && tasks.isEmpty){
+          return const Center(child:CircularProgressIndicator());
+        }
+        if(tasks.isEmpty){
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.menu,size: 100,color: Colors.grey,),
+                Text('No tasks yet!',style: TextStyle(fontSize: 18,color: Colors.grey),)
+              ],
+            ),
+          );
+        }
         return Center(
             child: ListView.separated(
                 itemBuilder: (context, index) =>
