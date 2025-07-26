@@ -86,6 +86,7 @@ class HomeLayout extends StatelessWidget {
                               cubit.changeBottomSheetState(
                                   isShow: false, icon: Icons.edit);
                               cubit.tasks = await cubit.taskDb.getDb();
+
                     }).catchError((e){
                       if(kDebugMode){
                         print('Error when insert data to DB: $e');
@@ -198,7 +199,7 @@ class HomeLayout extends StatelessWidget {
               currentIndex: cubit.currentIndex,
               onTap: (value) async{
                 cubit.changeIndex(value);
-                await cubit.getDate();
+                // await cubit.getDate();
                 // if (kDebugMode) {
                 //   print('--- BottomNav onTap ---');
                 //   print('cubit.tasks after getDate: ${cubit.tasks}');

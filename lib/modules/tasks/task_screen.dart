@@ -19,7 +19,7 @@ class TaskScreen extends StatelessWidget {
         return Center(
             child: ListView.separated(
                 itemBuilder: (context, index) =>
-                    buildTaskItems(tasks[index]),
+                    buildTaskItems(tasks[index],context),
                 separatorBuilder: (context, index) => Padding(
                       padding: const EdgeInsetsDirectional.only(start: 20.0),
                       child: Container(

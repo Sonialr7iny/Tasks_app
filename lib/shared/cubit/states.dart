@@ -9,6 +9,8 @@ class AppInsertDatabaseState extends AppStates{}
 
 class AppGetDatabaseState extends AppStates{}
 
+class AppUpdateDatabaseState extends AppStates{}
+
 class AppGetDatabaseLoadingState extends AppStates{}
 
 class AppDatabaseErrorState extends AppStates{

@@ -150,12 +150,25 @@ class TaskDb {
       return result;
     }catch(e,s){
       if(kDebugMode){
-        print('TASK_DB :: getDB - !!! CRITTICAL ERROR during rawQuery: ${e.toString()}');
+        print('TASK_DB :: getDB - !!! CRITICAL ERROR during rawQuery: ${e.toString()}');
         print('TASK_DB :: getDB - Stacktrace: $s');
       }
       return <Map<String,dynamic>>[];
     }
     // return await db.rawQuery('SELECT * FROM tasks');
   }
+
+  Future<void> updateData({
+    required String status,
+     required int id,
+})async
+  {
+    final Database? db=await database;
+    await db!.rawUpdate('UPDATE tasks SET status =? WHERE id =?',
+    [status,'$id']
+    );
+  }
+
+
 
 }
