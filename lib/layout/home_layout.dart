@@ -39,7 +39,11 @@ class HomeLayout extends StatelessWidget {
           if(kDebugMode){
             print('HomeLayout Listener received state :$state');
             if (state is AppGetDatabaseState) {
-              print('HomeLayout Listener saw AppGetDatabaseState. Tasks: ${AppCubit.get(context).newTasks.length},Done:${AppCubit.get(context).doneTasks.length},Archive:${AppCubit.get(context).archivedTasks.length}');
+              print('HomeLayout Listener saw AppGetDatabaseState. Tasks: '
+                  '${AppCubit.get(context).newTasks.length},'
+                  'Done:${AppCubit.get(context).doneTasks.length},'
+                  'Archive:${AppCubit.get(context).archivedTasks.length}'
+              );
             }
           }
           // if(state is AppGetDatabaseState&&AppCubit.get(context).isBottomSheetShown){
@@ -112,7 +116,7 @@ class HomeLayout extends StatelessWidget {
                 } else {
                   scaffoldKey.currentState
                       ?.showBottomSheet(
-                          elevation: 20.0,
+                          elevation: 30.0,
                           (context) => Padding(
                                 padding: const EdgeInsets.all(20.0),
                                 child: Form(
